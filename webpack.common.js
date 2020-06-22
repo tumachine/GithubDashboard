@@ -20,12 +20,12 @@ module.exports = {
       extensions: ['.tsx', '.ts', '.js']
   },
   output: {
-    filename: 'bundle.min.js',
-    path: path.resolve(__dirname, 'docs')
+    path: path.resolve(__dirname, 'docs'),
+    filename: 'main.js',
   },
   plugins: [
     new HtmlWebpackPlugin({
       template: path.resolve(__dirname, 'src', 'index.html')
-    })
+    }),
   ],
 }
