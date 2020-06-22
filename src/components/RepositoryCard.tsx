@@ -29,6 +29,10 @@ const RepositoryCard = (props: Props) => {
     }, [])
 
     const loadDescription = (description: string, charLimit: number = 100) => {
+        if (!description) {
+            return ''
+        }
+
         if (description.length > charLimit) {
             return description.substr(0, charLimit) + '...'
         }
