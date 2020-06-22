@@ -2,57 +2,46 @@ import React, { useState, useEffect } from 'react';
 import * as Github from '../lib/githubApi';
 import SearchResult from '../components/SearchResult';
 import Paginator from '../components/Paginator';
+import { responseData, startLocalStorage, createResponseData, setLocalStorage } from '../lib/utils';
+import styled from 'styled-components';
 
 interface Props {
 }
 
-const startLocalStorage = (item: string, defVal: string) => {
-  const value = window.localStorage.getItem(item)
-  if (value !== null) {
-    return value;
-  }
-  window.localStorage.setItem(item, defVal)
-  return defVal;
-}
-
-const setLocalStorage = (item: string, val: string) => {
-  window.localStorage.setItem(item, val)
-}
-
 const SearchSite = (props: Props) => {
+  const [data, setData] = useState<responseData<Github.RepoInfo[]>>(createResponseData('Fetching', [], false))
   const [search, setSearch] = useState(startLocalStorage('search', ''));
-  const [results, setResults] = useState<Github.RepoInfo[]>([]);
   const [page, setPage] = useState(parseInt(startLocalStorage('page', '1')));
+
+  useEffect(() => {
+    startSearch(page); 
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearch(e.target.value);
     setLocalStorage('search', e.target.value);
   }
 
-  const startSearch = () => {
+  const startSearch = (page: number) => {
+    setData(createResponseData('Fetching', data.data, true));
     Github.getPage(page, search)
-      .then(repo => {
-          setResults(repo)
+      .then(res => {
+        setData(createResponseData(res.message, res.data, false));
       })
   }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (page === 1) {
-        startSearch();
-    } else {
-        setPage(1);
-    }
+
+    startSearch(1);
+    setPage(1);
   }
 
   const handlePageClick = (pageNum: number) => {
-      setPage(pageNum);
+    startSearch(pageNum);
+    setPage(pageNum);
+    setLocalStorage('page', pageNum.toString());
   }
-
-  useEffect(() => {
-    startSearch();
-    setLocalStorage('page', page.toString());
-  }, [page])
 
   return (
     <div>
@@ -67,16 +56,28 @@ const SearchSite = (props: Props) => {
             <Paginator active={page} handleClick={handlePageClick}></Paginator>
         </div>
 
-        <div>
-          {results === null
-            ? 'Cannot get data, most likely exceeded request limit'
-            : results.length === 0 
-              ? 'No info for this page'
-              : results.map(result => <SearchResult key={result.id} repo={result}></SearchResult>)
-          } 
-        </div>
+        <div>Status: {data.message}</div>
+
+        {data.data && data.data.map(repo => (
+          <CardContainer key={repo.id}>
+            <Row>
+              <SearchResult repo={repo}></SearchResult>
+            </Row>
+          </CardContainer>
+        ))} 
     </div>
   )
 }
+
+const CardContainer = styled.div`
+    box-sizing: border-box;
+`;
+
+const Row = styled.div`
+    margin: 0 -5px;
+    width: 100%;
+    padding: 0 10px;
+`;
+
 
 export default SearchSite;

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { RepoInfo } from '../lib/githubApi'
-import { Link } from 'react-router-dom';
+import { Link, useHistory } from 'react-router-dom';
 import styled from 'styled-components';
 
 interface Props {
@@ -8,34 +8,44 @@ interface Props {
 }
 
 const SearchResult = (props: Props) => {
-    return (
-        <Card>
-            <StyledLink 
-                to={{
-                    pathname: '/card',
-                    state: {
-                        repo: props.repo,
-                    }
-                }}>
-                {props.repo.name}
-            </StyledLink>
+    const history = useHistory();
 
-            <div>Stars: {props.repo.stargazers_count}</div>
-            <div>Last commit on: {new Date(props.repo.updated_at).toLocaleString()}</div>
-            <a href={props.repo.html_url} target='_blank'>Github</a>
+    const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
+        const path = '/card';
+        const state = { repo: props.repo}  
+        history.push(path, state);
+    };
+
+    return (
+        <Card onClick={handleClick}>
+            <Name>{props.repo.name}</Name>
+            <Container>
+                <div>Stars: {props.repo.stargazers_count}</div>
+                <div>Last commit on: {new Date(props.repo.updated_at).toLocaleString()}</div>
+                <a href={props.repo.html_url} target='_blank' onClick={(e) => e.stopPropagation()}>Github</a>
+            </Container>
+
         </Card>
     )   
 }
 
-const StyledLink = styled(Link)`
+const Name = styled.h3`
     font-size: 25px;
-    color: blue;
+    margin-block-start: 0;
+    margin-block-end: 0;
+`;
+
+const Container = styled.div`
+    padding: 2px 16px;
 `;
 
 const Card = styled.div`
-    width: 100%;
-    height: auto;
-    border: 5px solid grey;
+    padding: 16px;
+    background-color: #f4f4f4;
+    &:hover {
+        background-color: white;
+    }
+    border: 5px solid black;
 `;
 
 export default SearchResult;
