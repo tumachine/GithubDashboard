@@ -6,7 +6,7 @@ import App from './App';
 console.log(process.env);
 
 ReactDOM.render((
-  <BrowserRouter basename='/docs'>
+  <BrowserRouter basename='/GithubDashboard'>
       <App/>
   </BrowserRouter>
   ), document.getElementById('root')
