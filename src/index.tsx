@@ -9,6 +9,7 @@ console.log(process.env);
 ReactDOM.render((
   <BrowserRouter basename='/GithubDashboard'>
   {/* <BrowserRouter> */}
+  {/* // <BrowserRouter> */}
       <App/>
   </BrowserRouter>
   ), document.getElementById('root')
