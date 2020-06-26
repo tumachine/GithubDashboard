@@ -1,21 +1,11 @@
-import axios from 'axios';
-
-interface CardInfo {
-  name: string,
-  stars: number,
-  last_commit: Date,
-  avatar_url: string,
-  owner_nickname: string,
-  owner_url: string,
-  description: string,
-  languages: string[],
-  contributors: string[],
-}
+import axios, { AxiosResponse, AxiosError } from 'axios';
 
 interface RepoInfo {
   id: number,
+  url: string,
   name: string,
   stargazers_count: number,
+  forks_count: number,
   updated_at: string,
   languages_url: string,
   contributors_url: string,
@@ -28,9 +18,21 @@ interface RepoInfo {
   html_url: string,
 }
 
-interface LangAndContributors {
-  languages: string[],
-  contributors: string[],
+interface Contributor {
+  login: string,
+  avatar_url: string,
+  url: string,
+  html_url: string,
+  contributions: number,
+}
+
+interface Language { 
+  language: string,
+  lines: number; 
+}
+
+interface DataConverter<T> {
+  (data: any): T
 }
 
 interface Response<T> {
@@ -38,6 +40,19 @@ interface Response<T> {
   message: string,
   success: boolean,
 }
+
+enum SearchSort {
+  stars = 'stars',
+  forks = 'forks',
+  help = 'help-wanted-issues',
+  updated = 'updated',
+}
+
+enum SearchOrder {
+  descending = 'desc',
+  ascending = 'asc',
+}
+
 
 function createResponse<T>(data: T, message: string, success: boolean): Response<T> {
   return { data, message, success };
@@ -51,65 +66,68 @@ function createSuccessResponse<T>(data: T, message: string = 'Success'): Respons
   return createResponse(data, message, true);
 }
 
-const baseURL = 'https://api.github.com/';
-
-const URLS = {
-  top: (page: number) => `${baseURL}search/repositories?q=stars:>=1&sort=stars&order=desc&page=${page}&per_page=10`,
-  find: (search: string, page: number) => `${baseURL}search/repositories?q=${search}+in:name&sort=stars&order=desc&page=${page}&per_page=10`,
+const searchBy = {
+  any: 'stars:>=1',
+  name: (name: string) => `${name}+in:name`
 }
 
-const getLanguagesAndContributors = (lang_url: string, cont_url: string): Promise<Response<LangAndContributors>> => {
-  return axios.all([axios.get(lang_url), axios.get(cont_url)])
-    .then(axios.spread((lang, cont) => {  
-      const languages = Object.keys(lang.data);
-      const contributors = cont.data.map((c: any) => c.login);
-      const data: LangAndContributors = { languages, contributors };
-      return createSuccessResponse(data);
-    }))
-    .catch((error: Error) => {
-      return createErrorResponse('Could not fetch languages and contributors');
-    })
+// https://api.github.com/search/repositories?q=stars:>=1&sort=stars&order=desc&page=$1&per_page=10
+// https://api.github.com/search/repositories?q=tumachine+in:name&sort=stars&order=desc&page=$4&per_page=10
+const constructPageSearchURL = (search: string = '', 
+                                page: number = 1, 
+                                sort: SearchSort = SearchSort.stars, 
+                                order: SearchOrder = SearchOrder.descending,
+                                per_page: number = 10): string => {
+  return `https://api.github.com/search/repositories?` +
+      `q=${search === '' ? searchBy.any : searchBy.name(search)}` +
+      `&sort=${sort}` +
+      `&order=${order}` +
+      `&page=${page}` +
+      `&per_page=${per_page}`
 }
 
-const getPage = (page: number, search?: string): Promise<Response<RepoInfo[]>> => {
-  const request = search !== ''
-    ? axios.get(URLS.find(search, page))
-    : axios.get(URLS.top(page))
-
-  return request
+function standardGet<T>(url: string, converter: DataConverter<T> = (data) => data): Promise<Response<T>> {
+  console.log('getting: ' + url)
+  return axios.get(url)
     .then(res => {
-      if (res.data.items.length === 0) {
-        return createSuccessResponse(res.data.items, 'No info on this page')
-      }
-      return createSuccessResponse(res.data.items);
-
+      return createSuccessResponse(converter(res.data))
     })
-    .catch((error: Error) =>  createErrorResponse('Could not fetch page'))
+    .catch((error: AxiosError) => {
+      return createErrorResponse(error.message);
+    })
 }
 
-const extractRepoInfo = (repoInfo: RepoInfo): Promise<Response<CardInfo>> => {
-    return getLanguagesAndContributors(repoInfo.languages_url, repoInfo.contributors_url)
-      .then(res => {
-        if (!res.success) {
-          return createErrorResponse<CardInfo>(res.message);
-        }
-
-        const data = {
-          name: repoInfo.name,
-          stars: repoInfo.stargazers_count,
-          last_commit: new Date(repoInfo.updated_at),
-          avatar_url: repoInfo.owner.avatar_url,
-          owner_nickname: repoInfo.owner.login,
-          owner_url: repoInfo.owner.html_url,
-          description: repoInfo.description,
-          languages: res.data.languages,
-          contributors: res.data.contributors,
-        }
-        return createSuccessResponse(data);
+const getLanguages = (lang_url: string): Promise<Response<Language[]>> => {
+  return standardGet<Language[]>(lang_url, (data) => {
+      const languages: Language[] = Object.keys(data).map(key => {
+        return { language: key, lines: data[key] }
       })
-      .catch((error: Error) => {
-        return createErrorResponse('Could not get languages and contributors')
-      })
+      return languages;
+  })
 }
 
-export { extractRepoInfo, getPage, RepoInfo, Response };
+const getContributors = (cont_url: string): Promise<Response<Contributor[]>> => {
+  return standardGet<Contributor[]>(cont_url)
+}
+
+const getPage = (pageSearchURL: string): Promise<Response<RepoInfo[]>> => {
+  return standardGet<RepoInfo[]>(pageSearchURL, (data) => data.items);
+}
+
+const getRepo = (repo_url: string): Promise<Response<RepoInfo>> => {
+  return standardGet<RepoInfo>(repo_url, (data) => data);
+}
+
+export { 
+  SearchSort,
+  SearchOrder,
+  constructPageSearchURL,
+  getPage,
+  getLanguages,
+  getContributors,
+  getRepo,
+  RepoInfo,
+  Response,
+  Language,
+  Contributor 
+};

@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { RepoInfo } from '../lib/githubApi'
-import { Link, useHistory } from 'react-router-dom';
-import styled from 'styled-components';
+import { useHistory } from 'react-router-dom';
+import moment from 'moment';
+import './index.css'
 
 interface Props {
     repo: RepoInfo,
@@ -10,42 +11,36 @@ interface Props {
 const SearchResult = (props: Props) => {
     const history = useHistory();
 
+    const [hovered, setHovered] = useState(false);
+
+    const toogleHover = () => {
+        setHovered(!hovered);
+    }
+
     const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
         const path = '/card';
-        const state = { repo: props.repo}  
+        const state = { url: props.repo.url}  
         history.push(path, state);
     };
 
     return (
-        <Card onClick={handleClick}>
-            <Name>{props.repo.name}</Name>
-            <Container>
-                <div>Stars: {props.repo.stargazers_count}</div>
-                <div>Last commit on: {new Date(props.repo.updated_at).toLocaleString()}</div>
-                <a href={props.repo.html_url} target='_blank' onClick={(e) => e.stopPropagation()}>Github</a>
-            </Container>
-
-        </Card>
+        <tr onMouseEnter={toogleHover} onMouseLeave={toogleHover} onClick={handleClick}>
+            {/* <td className='items-row__name items__name'>
+                <a className='items--link' href={props.repo.html_url} target='_blank' onClick={(e) => e.stopPropagation()}>{props.repo.name}</a>
+            </td> */}
+            <td className='items-row__name items__name'>{props.repo.name}</td>
+            <td className='items-row__owner items__owner'>
+                <a className='items--link' href={props.repo.owner.html_url} target='_blank' onClick={(e) => e.stopPropagation()}>{props.repo.owner.login}</a>
+            </td>
+            <td className='items-row__stars items__stars'>{props.repo.stargazers_count}</td>
+            <td className='items-row__forks items__forks'>{props.repo.forks_count}</td>
+            <td className='items-row__commit items__commit' style={{fontSize: hovered ? '21px': '24px'}}>
+                {hovered 
+                    ? moment(props.repo.updated_at).format('lll')
+                    : moment(props.repo.updated_at).fromNow()}
+            </td>
+        </tr>
     )   
 }
-
-const Name = styled.h3`
-    font-size: 25px;
-    margin-block-start: 0;
-    margin-block-end: 0;
-`;
-
-const Container = styled.div`
-    padding: 2px 16px;
-`;
-
-const Card = styled.div`
-    padding: 16px;
-    background-color: #f4f4f4;
-    &:hover {
-        background-color: white;
-    }
-    border: 5px solid black;
-`;
 
 export default SearchResult;

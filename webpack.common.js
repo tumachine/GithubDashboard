@@ -12,7 +12,10 @@ module.exports = {
         },
         {
           test: /\.css$/,
-          use: ['style-loader', 'css-loader']
+          use: [
+            'style-loader',
+            'css-loader'
+          ],
         }
       ]
   },
@@ -22,6 +25,7 @@ module.exports = {
   output: {
     path: path.resolve(__dirname, 'docs'),
     filename: 'main.js',
+    publicPath: '/',
   },
   plugins: [
     new HtmlWebpackPlugin({

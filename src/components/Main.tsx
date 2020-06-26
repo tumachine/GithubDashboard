@@ -1,9 +1,8 @@
-import React, { useState } from 'react';
-import { Switch, Route, HashRouter, BrowserRouter } from 'react-router-dom';
+import React from 'react';
+import { Switch, Route } from 'react-router-dom';
 
 import SearchSite from './SearchSite';
 import RepositoryCard from './RepositoryCard';
-import { RepoInfo } from '../lib/githubApi';
 
 const Main = () => {
     return (

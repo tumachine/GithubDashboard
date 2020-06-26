@@ -1,114 +1,123 @@
 import React, { useState, useEffect } from 'react';
 import * as Github from '../lib/githubApi';
-import SearchResult from '../components/SearchResult';
-import Paginator from '../components/Paginator';
-import styled from 'styled-components';
-import { responseData, createResponseData } from '../lib/utils';
+import { Fetching, generateUseResponseData, LStorage } from '../lib/utils';
+import './index.css';
+import moment from 'moment';
 
 interface Props {
     location: any;
 }
 
-interface ContLang {
-    contributors: string[],
-    languages: string[]
+const fetchingLanguages: Fetching<Github.Language[]> = {
+  request: (url) => Github.getLanguages(url),
+  render: (data) => data.map(lang => (
+    <li key={lang.language}><strong>{lang.language}</strong>: {lang.lines}</li>
+  )),
+  message: 'Fetching languages...',
 }
+
+const fetchingContributors: Fetching<Github.Contributor[]> = {
+  request: (url) => Github.getContributors(url),
+  render: (data) => {
+    const cont = data.length > 10
+        ? data.slice(0, 10)
+        : data;
+
+    return cont.map(c => (
+      <li key={c.url}><a href={c.html_url}>{c.login}</a></li>
+    ));
+  },
+  message: 'Fetching contributors...',
+}
+
+const useLanguagesResponse = generateUseResponseData(fetchingLanguages);
+const useContributorsResponse = generateUseResponseData(fetchingContributors);
+
 
 const RepositoryCard = (props: Props) => {
-    // https://api.github.com/repositories/28457823
-    const repo = props.location.state.repo as Github.RepoInfo;
+  // https://api.github.com/repositories/28457823
+  const [languages, setLanguages] = useLanguagesResponse();
+  const [contributors, setContributors] = useContributorsResponse();
+  const [isFetching, setIsFetching] = useState(true);
+  const [repo, setRepo] = useState<Github.RepoInfo>(null);
 
-    const [lastData, setLastData] = useState<responseData<ContLang>>(createResponseData('Fetching', { contributors: [], languages: []}, false));
+  useEffect(() => {
+    Github.getRepo(getUrl())
+      .then(data => {
+        setLanguages(data.data.languages_url);
+        setContributors(data.data.contributors_url);
+        setRepo(data.data);
+        setIsFetching(false);
+      })
+  }, [])
 
-    useEffect(() => {
-      setLastData(createResponseData('Fetching', lastData.data, true));
-        Github.extractRepoInfo(repo)
-          .then(cardInfo => {
-              setLastData(createResponseData(cardInfo.message, cardInfo.data, false));
-          })
-    }, [])
-
-    const loadDescription = (description: string, charLimit: number = 100) => {
-        if (!description) {
-            return ''
-        }
-
-        if (description.length > charLimit) {
-            return description.substr(0, charLimit) + '...'
-        }
-        return description;
+  const getUrl = () => {
+    const url = props?.location?.state?.url;
+    if (url) {
+      LStorage.save('repo', url)
+      return url
     }
+    return Github.getRepo(LStorage.start('repo', "https://api.github.com/repos/freeCodeCamp/freeCodeCamp"))
+  }
 
-    const loadContributorsLanguages = (addInfo: ContLang) => {
-        const cont = addInfo.contributors.length > 10
-           ? addInfo.contributors.slice(0, 10)
-           : addInfo.contributors;
+  const convertDescription = (description: string, charLimit: number = 100) => {
+      if (!description) {
+          return ''
+      }
 
-        return (
-            <div style={{display: 'flex', width: '100%', alignItems: 'center', justifyContent: 'space-evenly'}}>
-                <div>
-                    Top Contributors: {cont.map(cont => <div key={cont}>{cont}</div>)}
-                </div>
-                <div>
-                    Languages: {addInfo.languages.map(lang => <div key={lang}>{lang}</div>)}
-                </div>
+      if (description.length > charLimit) {
+          return description.substr(0, charLimit) + '...'
+      }
+      return description;
+  }
+
+  return (
+      <div className='container'>
+        {!isFetching && (
+        <div className="card">
+          <div className='card__intro'>
+            <h1 className='card__intro__name'>{repo.name}</h1>
+          </div>
+
+          <div className="card__subintro">
+            <h2 className='card__subintro__stars'>Stars: <strong>{repo.stargazers_count}</strong></h2>
+            <h2 className='card__subintro__forks'>Forks: {repo.forks_count}</h2>
+            <h2 className='card__subintro__commit'>Commit: {moment(repo.updated_at).format('lll')}</h2>
+          </div>
+
+          <div className='card__body'>
+            <div className='card__owner'>
+              <img className='card__owner__img' src={repo.owner.avatar_url}></img>
+              <p className='card__owner__link'>Owner: <a href={repo.owner.html_url} target='_blank'>{repo.owner.login}</a></p>
             </div>
-        )
-    }
 
+            <div className='card__description'>
+              <div className='card__desc'>
+                <h2 className='card__desc__title'>Description:</h2>
+                <p className='card__desc__text'>{convertDescription(repo.description)}</p>
+              </div>
 
-    return (
-        <Card>
-
-            <Avatar src={repo.owner.avatar_url}></Avatar>
-            <Info>
-                <h1>{repo.name}</h1>
-
-                <Title>Stars: {repo.stargazers_count}</Title>
-                <Title>Last commit on: {new Date(repo.updated_at).toLocaleString()}</Title>
-
-                <a href={repo.owner.html_url} target='_blank'>Owner: {repo.owner.login}</a>
-
-                <h2>Short description:</h2>
-                <p>{loadDescription(repo.description)}</p>
-
-                <h2>Status: {lastData.message}</h2>
-                <div>
-                {lastData.data && loadContributorsLanguages(lastData.data)} 
+              <div className='card__info'>
+                <div className='card__info__lang'>
+                  <h2 className='card__info__lang__title card__info__title'>Languages:</h2>
+                  <ul className='card__info__lang__list'>
+                    {languages}
+                  </ul>
                 </div>
-            </Info>
-        </Card>
-    )
+
+                <div className='card__info__cont'>
+                  <h2 className='card__info__cont__title card__info__title'>Contributors:</h2>
+                  <ul className='card__info__cont__list'>
+                    {contributors}
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        )}
+      </div>
+  )
 }
-const Title = styled.p`
-    color: grey;
-    font-size: 18px;
-`;
-
-const Stars = styled.div`
-    font-size: 30px;
-`;
-
-const Updated = styled.div`
-    font-size: 20px;
-`;
-
-const Avatar = styled.img`
-    width: 400px;
-    height: 100%;
-`;
-
-const Info = styled.div`
-    text-align: center;
-    font-family: arial;
-    width: 100%;
-`;
-
-const Card = styled.div`
-    display: flex;
-    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
-    max-width: 800px;
-    margin: auto;
-`;
 
 export default RepositoryCard;

@@ -1,17 +1,44 @@
 import React, { useState, useEffect } from 'react';
 import * as Github from '../lib/githubApi';
-import SearchResult from '../components/SearchResult';
-import Paginator from '../components/Paginator';
-import { responseData, startLocalStorage, createResponseData, setLocalStorage } from '../lib/utils';
-import styled from 'styled-components';
+import SearchResult from './SearchResult';
+import Paginator from './Paginator';
+import { LStorage, Fetching, generateUseResponseData } from '../lib/utils';
+import './index.css';
 
 interface Props {
 }
 
+
+const fetchingPage: Fetching<Github.RepoInfo[]> = {
+  request: (url) => Github.getPage(url),
+  render: (data) => (
+        <table className='items'>
+          <thead>
+            <tr>
+              <th className='items-head__name items__name'>Name</th>
+              <th className='items-head__owner items__owner'>Owner</th>
+              <th className='items-head__stars items__stars'>Stars</th>
+              <th className='items-head__forks items__forks'>Forks</th>
+              <th className='items-head__commit items__commit'>Commit</th>
+            </tr>
+          </thead>
+          <tbody>
+            {data.map(repo => <SearchResult key={repo.id} repo={repo}></SearchResult>)}
+          </tbody>
+        </table>
+  ),
+  message: 'Fetching page...',
+}
+
+const useSearchResponse = generateUseResponseData(fetchingPage);
+
 const SearchSite = (props: Props) => {
-  const [data, setData] = useState<responseData<Github.RepoInfo[]>>(createResponseData('Fetching', [], false))
-  const [search, setSearch] = useState(startLocalStorage('search', ''));
-  const [page, setPage] = useState(parseInt(startLocalStorage('page', '1')));
+  const [search, setSearch] = useState(LStorage.start('search', ''));
+  const [page, setPage] = useState(LStorage.start('page', 1));
+  const [sort, setSort] = useState(LStorage.start('sort', Github.SearchSort.stars));
+  const [order, setOrder] = useState(LStorage.start('order', Github.SearchOrder.descending));
+
+  const [searchResponse, setSearchResponse] = useSearchResponse(Github.constructPageSearchURL(search, page));
 
   useEffect(() => {
     startSearch(page); 
@@ -19,15 +46,11 @@ const SearchSite = (props: Props) => {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearch(e.target.value);
-    setLocalStorage('search', e.target.value);
+    LStorage.save('search', e.target.value);
   }
 
   const startSearch = (page: number) => {
-    setData(createResponseData('Fetching', data.data, true));
-    Github.getPage(page, search)
-      .then(res => {
-        setData(createResponseData(res.message, res.data, false));
-      })
+    setSearchResponse(Github.constructPageSearchURL(search, page));
   }
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -40,44 +63,21 @@ const SearchSite = (props: Props) => {
   const handlePageClick = (pageNum: number) => {
     startSearch(pageNum);
     setPage(pageNum);
-    setLocalStorage('page', pageNum.toString());
+    LStorage.save('page', pageNum);
   }
 
   return (
-    <div>
-        <form onSubmit={handleSubmit}>
-            <label>
-                Type name of github repository
-                <input type='text' value={search} onChange={handleChange} />
-            </label>
-            <input type='submit' value='Search' />
+    <div className='container'>
+        <form onSubmit={handleSubmit} className='search'>
+            <input type='text' className='search__text' placeholder='Type name of github repository' value={search} onChange={handleChange} />
+            <input type='submit' className='search__submit' value='Search'/>
         </form>
-        <div>
-            <Paginator active={page} handleClick={handlePageClick}></Paginator>
-        </div>
 
-        <div>Status: {data.message}</div>
+        <Paginator active={page} handleClick={handlePageClick}></Paginator>
 
-        {data.data && data.data.map(repo => (
-          <CardContainer key={repo.id}>
-            <Row>
-              <SearchResult repo={repo}></SearchResult>
-            </Row>
-          </CardContainer>
-        ))} 
+        {searchResponse}
     </div>
   )
 }
-
-const CardContainer = styled.div`
-    box-sizing: border-box;
-`;
-
-const Row = styled.div`
-    margin: 0 -5px;
-    width: 100%;
-    padding: 0 10px;
-`;
-
 
 export default SearchSite;
