@@ -38,9 +38,9 @@ module.exports = {
     path: path.resolve(__dirname, 'docs'),
     filename: 'main.js',
   },
-  devServer: {
-      historyApiFallback: true,
-  },
+  // devServer: {
+  //     historyApiFallback: true,
+  // },
   plugins: [
     new HtmlWebpackPlugin({
       template: path.resolve(__dirname, 'src', 'index.html')
