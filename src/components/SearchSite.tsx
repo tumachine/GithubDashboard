@@ -37,8 +37,13 @@ const SearchSite = (props: Props) => {
   const [page, setPage] = useState(LStorage.start('page', 1));
   const [sort, setSort] = useState(LStorage.start('sort', Github.SearchSort.stars));
   const [order, setOrder] = useState(LStorage.start('order', Github.SearchOrder.descending));
+  const [perPage, setPerPage] = useState(LStorage.start('per_page', 10));
 
-  const [searchResponse, setSearchResponse] = useSearchResponse(Github.constructPageSearchURL(search, page));
+  const createSearchResponse = (): string => {
+    return Github.constructPageSearchURL(search, page, sort, order, perPage);
+  }
+
+  const [searchResponse, setSearchResponse] = useSearchResponse(createSearchResponse());
 
   useEffect(() => {
     startSearch(page); 
@@ -50,7 +55,7 @@ const SearchSite = (props: Props) => {
   }
 
   const startSearch = (page: number) => {
-    setSearchResponse(Github.constructPageSearchURL(search, page));
+    setSearchResponse(createSearchResponse());
   }
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -61,9 +66,30 @@ const SearchSite = (props: Props) => {
   }
 
   const handlePageClick = (pageNum: number) => {
-    startSearch(pageNum);
     setPage(pageNum);
+    setSearchResponse(Github.constructPageSearchURL(search, pageNum, sort, order, perPage));
     LStorage.save('page', pageNum);
+  }
+
+  useEffect(() => {
+    setSearchResponse(createSearchResponse());
+  }, [order, sort, perPage])
+
+  const handleOrderChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const val = e.target.value;
+    LStorage.save('order', val)
+    setOrder(val);
+  }
+
+  const handleSortChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const val = e.target.value;
+    LStorage.save('sort', val)
+    setSort(val);
+  }
+
+  const handlePerPageChange = (pages: number) => {
+    LStorage.save('per_page', pages)
+    setPerPage(pages);
   }
 
   return (
@@ -73,9 +99,39 @@ const SearchSite = (props: Props) => {
             <input type='submit' className='search__submit' value='Search'/>
         </form>
 
-        <Paginator active={page} handleClick={handlePageClick}></Paginator>
+        <div className="controls">
+          <label>
+            Order:
+            <select value={order} onChange={handleOrderChange}>
+              {Object.entries(Github.SearchOrder).map(([k, v]) => {
+                return (
+                  <option value={v}>{k}</option>
+                )
+              })}
+            </select>
+          </label>
+
+          <label>
+            Sort:
+            <select value={sort} onChange={handleSortChange}>
+              {Object.entries(Github.SearchSort).map(([k, v]) => {
+                return (
+                  <option value={v}>{k}</option>
+                )
+              })}
+            </select>
+          </label>
+
+
+          <label>
+            Pages:
+            {[10, 20, 30].map(num => <button onClick={() => handlePerPageChange(num)}>{num}</button>)}
+          </label>
+        </div>
 
         {searchResponse}
+
+        <Paginator active={page} handleClick={handlePageClick}></Paginator>
     </div>
   )
 }

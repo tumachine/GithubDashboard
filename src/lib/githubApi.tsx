@@ -41,16 +41,16 @@ interface Response<T> {
   success: boolean,
 }
 
-enum SearchSort {
-  stars = 'stars',
-  forks = 'forks',
-  help = 'help-wanted-issues',
-  updated = 'updated',
+const SearchSort = {
+  stars: 'stars',
+  forks: 'forks',
+  help: 'help-wanted-issues',
+  updated: 'updated',
 }
 
-enum SearchOrder {
-  descending = 'desc',
-  ascending = 'asc',
+const SearchOrder = {
+  descending: 'desc',
+  ascending: 'asc',
 }
 
 
@@ -75,8 +75,8 @@ const searchBy = {
 // https://api.github.com/search/repositories?q=tumachine+in:name&sort=stars&order=desc&page=$4&per_page=10
 const constructPageSearchURL = (search: string = '', 
                                 page: number = 1, 
-                                sort: SearchSort = SearchSort.stars, 
-                                order: SearchOrder = SearchOrder.descending,
+                                sort: string = SearchSort.stars,
+                                order: string = SearchOrder.descending,
                                 per_page: number = 10): string => {
   return `https://api.github.com/search/repositories?` +
       `q=${search === '' ? searchBy.any : searchBy.name(search)}` +
