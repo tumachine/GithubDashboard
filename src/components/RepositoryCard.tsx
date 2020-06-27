@@ -4,6 +4,10 @@ import { Fetching, generateUseResponseData, LStorage } from '../lib/utils';
 import './index.css';
 import moment from 'moment';
 
+import starImage from '../images/star.png';
+import commitImage from '../images/commit.png';
+import forkImage from '../images/fork.png';
+
 interface Props {
     location: any;
 }
@@ -44,10 +48,12 @@ const RepositoryCard = (props: Props) => {
   useEffect(() => {
     Github.getRepo(getUrl())
       .then(data => {
-        setLanguages(data.data.languages_url);
-        setContributors(data.data.contributors_url);
-        setRepo(data.data);
-        setIsFetching(false);
+        if (data.success) {
+          setLanguages(data.data.languages_url);
+          setContributors(data.data.contributors_url);
+          setRepo(data.data);
+          setIsFetching(false);
+        }
       })
   }, [])
 
@@ -76,13 +82,26 @@ const RepositoryCard = (props: Props) => {
         {!isFetching && (
         <div className="card">
           <div className='card__intro'>
-            <h1 className='card__intro__name'>{repo.name}</h1>
+            <h1 className='card__intro__name'><a href={repo.html_url} target='_blank'>{repo.name}</a></h1>
           </div>
 
           <div className="card__subintro">
-            <h2 className='card__subintro__stars'>Stars: <strong>{repo.stargazers_count}</strong></h2>
-            <h2 className='card__subintro__forks'>Forks: {repo.forks_count}</h2>
-            <h2 className='card__subintro__commit'>Commit: {moment(repo.updated_at).format('lll')}</h2>
+
+            <div className='card__subintro__stars card__subintro__item'>
+              <img className='card__subintro__stars__img card__subintro__img' src={starImage}></img>
+              <h2 className='card__subintro__stars__text'>{repo.stargazers_count}</h2>
+            </div>
+
+            <div className='card__subintro__forks card__subintro__item'>
+              <img className='card__subintro__forks__img card__subintro__img' src={forkImage}></img>
+              <h2 className='card__subintro__forks__text'>{repo.forks_count}</h2>
+            </div>
+
+            <div className='card__subintro__commit card__subintro__item'>
+              <img className='card__subintro__commit__img card__subintro__img' src={commitImage}></img>
+              <h2 className='card__subintro__commit__text'>{moment(repo.updated_at).format('lll')}</h2>
+            </div>
+
           </div>
 
           <div className='card__body'>

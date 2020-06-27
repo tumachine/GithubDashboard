@@ -4,6 +4,14 @@
     box-sizing: border-box;
 }
 
+@font-face {
+    font-family: 'RobotoMono';
+    src:  url('./fonts/RobotoMono.ttf') format('truetype');
+    font-weight: 600;
+    font-style: normal;
+}
+
 body {
     margin: 0;
+    /* font-family: 'RobotoMono'; */
 }

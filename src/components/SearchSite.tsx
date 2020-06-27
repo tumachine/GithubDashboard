@@ -125,7 +125,12 @@ const SearchSite = (props: Props) => {
 
           <label>
             Pages:
-            {[10, 20, 30].map(num => <button onClick={() => handlePerPageChange(num)}>{num}</button>)}
+            {[10, 20, 30].map(num => 
+              (<button 
+                onClick={() => handlePerPageChange(num)} 
+                className={`btn_per_page ${perPage === num && 'btn_per_page_active'}`}
+              >{num}</button>)
+            )}
           </label>
         </div>
 

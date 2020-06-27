@@ -1,5 +1,6 @@
 import axios, { AxiosResponse, AxiosError } from 'axios';
 
+axios.defaults.headers.common['Authorization'] = 'token 26e7d7ed3212eb855e130dc2da7687efa69a424b';
 interface RepoInfo {
   id: number,
   url: string,

@@ -34,7 +34,7 @@ const SearchResult = (props: Props) => {
             </td>
             <td className='items-row__stars items__stars'>{props.repo.stargazers_count}</td>
             <td className='items-row__forks items__forks'>{props.repo.forks_count}</td>
-            <td className='items-row__commit items__commit' style={{fontSize: hovered ? '21px': '24px'}}>
+            <td className='items-row__commit items__commit' style={{fontSize: hovered ? '18px': '24px'}}>
                 {hovered 
                     ? moment(props.repo.updated_at).format('lll')
                     : moment(props.repo.updated_at).fromNow()}

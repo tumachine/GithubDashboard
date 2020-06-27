@@ -15,7 +15,20 @@ module.exports = {
           'style-loader',
           'css-loader'
         ],
-      }
+      },
+      {
+        test: /\.(png|jpe?g|gif|jp2|webp)$/,
+        loader: 'file-loader',
+        options: {
+          name: 'images/[name].[ext]'
+        }
+      },
+      {
+        test: /\.(woff|woff2|eot|ttf|otf)$/,
+        use: [
+          'file-loader',
+        ],
+      },
     ]
   },
   resolve: {
@@ -25,9 +38,9 @@ module.exports = {
     path: path.resolve(__dirname, 'docs'),
     filename: 'main.js',
   },
-  // devServer: {
-  //     historyApiFallback: true,
-  // },
+  devServer: {
+      historyApiFallback: true,
+  },
   plugins: [
     new HtmlWebpackPlugin({
       template: path.resolve(__dirname, 'src', 'index.html')

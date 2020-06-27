@@ -34,7 +34,7 @@
 
 .search__text {
     width: 80%;
-    font-size: 15px;
+    font-size: 20px;
 }
 
 .search__submit {
@@ -51,6 +51,13 @@
     width: 80%;
 }
 
+.btn_per_page {
+
+} 
+
+.btn_per_page_active {
+    background-color: var(--clr-highlight);
+}
 
 /* -------------------- Paginator ------------------- */
 
@@ -107,7 +114,15 @@
 }
 
 .items tbody tr {
-    background-color: var(--clr-dark);
+    height: 70px;
+}
+
+.items tbody tr:nth-child(even) {
+    background-color: #e6e6e6;
+}
+
+.items tbody tr:nth-child(odd) {
+    background-color: #d6d6d6;
 }
 
 .items tbody tr:hover {
@@ -126,10 +141,14 @@
 
 .items__commit {
     text-align: center;
-    width: 20%;
+    width: 25%;
 }
 
 .items__forks {
+    text-align: center;
+}
+
+.items__owner {
     text-align: center;
 }
 
@@ -154,7 +173,7 @@
 
 
 .items-row__name {
-
+    font-size: 1.2em;
 }
 
 .items-row__owner {
@@ -174,7 +193,8 @@
 
 .card {
     height: 80%;
-    box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
+    width: 60%;
+    box-shadow: 0 4px 8px 0 rgba(0,0,0,0.4);
     display: flex;
     flex-direction: column;
 }
@@ -186,6 +206,7 @@
 .card__description {
     display: flex;
     flex-direction: column;
+    width: 60%;
 }
 
 /* Card Intro */
@@ -195,7 +216,17 @@
 }
 
 .card__intro__name {
+    font-size: 40px;
+}
 
+.card__intro__name a {
+    text-decoration: none;
+    color: black;
+}
+
+.card__intro__name a:hover {
+    text-decoration: underline;
+    cursor: pointer;
 }
 
 /* Card Subintro */
@@ -205,12 +236,22 @@
     border-bottom: 2px solid black;
 }
 
+.card__subintro__item {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
 .card__subintro__stars {
 
 }
 
-.card__subintro__forks {
+.card__subintro__img {
+    width: 30px;
+    height: 30px;
+}
 
+.card__subintro__forks {
 }
 
 .card__subintro__commit {
@@ -222,12 +263,16 @@
 .card__owner {
     display: flex;
     flex-direction: column;
+    height: 100%;
+    width: 40%;
+    border-right: 2px solid black;
 }
 
 .card__owner__img {
     padding: 10px;
+    width: 100%;
+    height: 100%;
     border-bottom: 2px solid black;
-    border-right: 2px solid black;
 }
 
 .card__owner__link {
@@ -239,20 +284,22 @@
 /* Card Description */
 .card__desc {
     border-bottom: 2px solid black;;
+   text-align: center; 
+   height: 30%;
 }
 
 .card__desc__title {
-   text-align: center; 
 }
 
 .card__desc__text {
-    
+    font-size: 1.2em;
 }
 
 /* Card Info */
 
 .card__info {
     display: flex;
+    height: 70%;
 }
 
 .card__info__title {
